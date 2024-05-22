@@ -46,7 +46,7 @@ int main(int argc, char const *argv[])
   iftMinMaxValues(label_img, &min_label, &max_label);
   num_labels = max_label - min_label + 1;
 
-  sprintf(out_str, "");
+  sprintf(out_str, " ");
   as_csv = iftExistArg(args, "csv");
   if(as_csv == false) sprintf(tmp_str, "K: %d\n", num_labels);
   else sprintf(tmp_str, "%d", num_labels);

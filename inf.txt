@@ -1,0 +1,7 @@
+Marked Seeds:
+78, 148
+105, 146
+81, 180
+112, 182
+Located Superpixel:
+97, 158

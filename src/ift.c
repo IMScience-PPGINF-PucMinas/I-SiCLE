@@ -3013,10 +3013,11 @@ void iftPutXYSlice(iftImage *img, const iftImage *slice, int zcoord)
 
     u.z   = zcoord;
     p     = 0;
-    #if IFT_OMP
-    #pragma omp parallel for private(p,q)
-    #endif
+    // #if IFT_OMP
+    // #pragma omp parallel for private(p,q)
+    // #endif
     for (int y = 0; y < img->ysize; y++)
+    {
         for (int x = 0; x < img->xsize; x++)
         {
             u.x = x; u.y = y;
@@ -3029,6 +3030,8 @@ void iftPutXYSlice(iftImage *img, const iftImage *slice, int zcoord)
             }
             p++;
         }
+        // printf("img->ysize = %d  and y = %d\n", img->ysize, y);
+    }
 }
 
 iftImage *iftGetXYSlice(const iftImage *img, int zcoord)
@@ -4940,6 +4943,8 @@ iftImage* iftReadImageFolderAsVolume(const char* folder_name)
         const char *path = files->files[z]->path;
         iftImage *slice = iftReadImageByExt(path);
 
+        // printf("%s\n",path);
+
         if(volume == NULL) {
             if(iftIsColorImage(slice))
                 volume = iftCreateColorImage(slice->xsize, slice->ysize, files->n, iftImageDepth(slice));
@@ -4959,7 +4964,7 @@ iftImage* iftReadImageFolderAsVolume(const char* folder_name)
                     "Both the current slice (%s) image being loaded and the first one must either be colored or grayscaled!"
                     "iftReadImageFolderAsVolume", path);
         }
-
+        // printf("XYZ volume = %d, %d, %d and XYZ SLICE = %d, %d, %d\n", volume->xsize, volume->ysize, volume->zsize, slice->xsize, slice->ysize, slice->zsize);
         iftPutXYSlice(volume, slice, z);
 
         iftDestroyImage(&slice);

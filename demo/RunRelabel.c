@@ -31,12 +31,16 @@ int main(int argc, char const *argv[])
   /*-------------------------------------------------------------------------*/
   const char *OUT_PATH;
   bool is_video;
-  iftImage *img, *label_img, *out_img;
+  iftImage *label_img, *out_img;
 
   readImgInputs(args, &label_img, &OUT_PATH, &is_video);
   iftDestroyArgs(&args);
 
   out_img = iftRelabelImage(label_img);
+
+  int min = IFT_INFINITY_INT, max = IFT_INFINITY_INT_NEG;
+  iftMinMaxValues(out_img,&min,&max);
+  printf("Min %d Max %d \n",min, max);
   iftDestroyImage(&label_img);
 
   if(!is_video)
@@ -70,7 +74,7 @@ void readImgInputs
 {
   #if IFT_DEBUG /*###########################################################*/
   assert(args != NULL);
-  assert(img != NULL);
+  // assert(img != NULL);
   assert(labels != NULL);
   assert(path != NULL);
   #endif /*##################################################################*/

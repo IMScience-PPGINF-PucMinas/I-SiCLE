@@ -304,6 +304,34 @@ void readSICLEArgs
     }
     else { iftError("No list of Ni values was provided", __func__); }
   }
+  if(iftExistArg(args, "reseg") == true)
+  {
+	if(iftHasArgVal(args,"reseg") == true){
+		const char *VAL = iftGetArg(args,"reseg");
+		const iftCSV *csv = iftReadCSV(VAL,';');
+		    if (csv == NULL) return;
+			// Check and print header
+			if (csv->header != NULL) {
+				for (long col = 0; col < csv->ncols; ++col) {
+					printf("%s\t", csv->header[col]);
+				}
+				printf("\n");
+			}
+
+			// Print data
+			for (long row = 0; row < csv->nrows; ++row) {
+				for (long col = 0; col < csv->ncols; ++col) {
+					printf("%s\t", csv->data[row][col]);
+				}
+				printf("\n");
+			}
+			//SET INF AS SEED
+			
+			
+			
+			//SET DESIRE SP
+	}
+  }
   
 }
 
@@ -355,6 +383,9 @@ void usage()
 		"Desired final number of superpixels. Default: 200");
 	printf("%-*s %s\n", SKIP_IND, "--ni",
 		"Comma-separated list of intermediary seed quantity.");
+	printf("%-*s %s\n", SKIP_IND, "--reseg",
+		"file for resegmentation using new seed's strategy");
+
 	printf("%-*s %s\n", SKIP_IND, "--help",
 		"Prints this message");
 
