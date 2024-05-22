@@ -234,8 +234,16 @@ iftImage *segMultiScale
       para cada spx vizinho de S:
     } 
     
-    
     */
+
+   while(true){
+    iftRemoveDHeapElem(f1,labelS1);
+    iftRemoveDHeapElem(f2,labelS2);
+
+    findFurthestAdj(segm, adjM, &coordS1, &coordS2);
+    labelS1 = segm->val[iftGetVoxelIndex(segm,centroides[labelS1])];
+    labelS2 = segm->val[iftGetVoxelIndex(segm,centroides[labelS2])];
+   }
 
   //   aux1 = labelS1;
   //   aux2 = labelS2;
