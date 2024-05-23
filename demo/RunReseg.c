@@ -29,6 +29,7 @@ bool isValidLabel(iftImage *img, int label);
 void findS(iftImage *img, int *label);
 void getAdj(iftImage *img, int **adjM);
 int **allocMatrix (int m, int n);
+void findFursthestAdj(iftImage *img, int **adjM, int *labelS1, int *labelS2);
 
 /* MAIN _____________________________________________________________________*/
 int main(int argc, char const *argv[])
@@ -240,7 +241,7 @@ iftImage *segMultiScale
     iftRemoveDHeapElem(f1,labelS1);
     iftRemoveDHeapElem(f2,labelS2);
 
-    findFurthestAdj(segm, adjM, &coordS1, &coordS2);
+    findFurthestAdj(segm, adjM, &labelS1, &labelS2);
     labelS1 = segm->val[iftGetVoxelIndex(segm,centroides[labelS1])];
     labelS2 = segm->val[iftGetVoxelIndex(segm,centroides[labelS2])];
    }
@@ -322,6 +323,12 @@ iftImage *segMultiScale
   free(adjM);
   
   return label_img;
+}
+
+
+void findFursthestAdj(iftImage *img, int **adjM, int *labelS1, int *labelS2)
+{
+
 }
 
 
