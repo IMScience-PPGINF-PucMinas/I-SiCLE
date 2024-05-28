@@ -205,6 +205,9 @@ iftImage *segMultiScale
 
   int **adjM = allocMatrix(size,size);
   
+  int *visitList = (int *) calloc (size, sizeof(int));
+
+  createVisitList(segm,visitList);
 
   iftVoxel *centroides = (iftVoxel *) calloc (size, sizeof(iftVoxel));
   
@@ -237,7 +240,7 @@ iftImage *segMultiScale
     
     */
 
-   while(true){
+   while(hasNonVisitedSP(visitList)){
     iftRemoveDHeapElem(f1,labelS1);
     iftRemoveDHeapElem(f2,labelS2);
 
@@ -538,7 +541,7 @@ void getAdj(iftImage *img, int **adjM){
 
 }
 
-bool hasNonVisitedSP(iftImage *img)
+bool hasNonVisitedSP(int **adj)
 {
   bool resp = false;
   iftVoxel p;
@@ -658,9 +661,11 @@ void getCSVCoord(const iftCSV *csv, const char *value, long *X_value, long *Y_va
 }
 
 
-//Ler a imagem original O
-//Ler as multi escalas da segmentação
-//Ler as Coordenadas O
-//pego a primeira escala e marco os pontos
-//Tento avançar
-//Se as 2 tiverem o msm rotulo, desiste do avanço
+
+/*
+
+Criar a lista de visitados
+alterar metodo de visitação
+testar se ele esta funcionando
+setar a nova forma de gerar S1 e S2
+*/
