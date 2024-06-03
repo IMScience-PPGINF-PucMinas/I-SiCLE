@@ -20,7 +20,7 @@ iftImage *segMultiScale
 void getCSVCoord(const iftCSV *csv, const char *label, long *X_value, long *Y_value);
 iftVoxel getVoxelCentroide(iftImage *img, int label);
 void freezeSP(iftImage *img, int scale, int label, int value);
-bool hasNonVisitedSP(iftImage *img);
+bool hasNonVisitedSP(int **adj, int size);
 void checkAsVisitedSP(iftImage *img, int labelS1, int labelS2);
 void getNewS(iftImage *img, int *labelS1, int *labelS2);
 void swapLabel(iftImage *img, int label0, int label1, int scale);
@@ -240,7 +240,7 @@ iftImage *segMultiScale
     
     */
 
-   while(hasNonVisitedSP(visitList)){
+   while(hasNonVisitedSP(visitList, size)){
     iftRemoveDHeapElem(f1,labelS1);
     iftRemoveDHeapElem(f2,labelS2);
 
@@ -541,19 +541,18 @@ void getAdj(iftImage *img, int **adjM){
 
 }
 
-bool hasNonVisitedSP(int **adj)
+bool hasNonVisitedSP(int **adj, int size)
 {
   bool resp = false;
-  iftVoxel p;
-  p.z = 0;
-  for(p.y = 0; p.y < img->ysize;p.y++)
+  for(int y = 0; y < size;y++)
   {
-    for(p.x = 0; p.x < img->xsize;p.x++)
+    for(int x = 0; x < size;x++)
     {
-      if(img->val[iftGetVoxelIndex(img,p)] > 0)
+      if(adj[x][y] != 0)
       {
         // printf("Não visitado %d\n", img->val[iftGetVoxelIndex(img,p)]);
         resp = true;
+        return resp;
       }   
     }
   }
