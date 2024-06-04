@@ -131,13 +131,13 @@ void readImgInputs
 
       if(iftIsImageFile(PATH) == true) 
       { 
-        // printf("IMAGEM\n");
+        printf("IMAGEM\n");
         (*segm) = iftReadImageByExt(PATH);
         (*is_video) = false; 
       }
       else if(iftDirExists(PATH) == true)
       { 
-        // printf("DIRETORIO\n");
+        printf("DIRETORIO\n");
         (*segm) = iftReadImageFolderAsVolume(PATH);
         (*is_video) = true;
       }
