@@ -56,7 +56,7 @@ int main(int argc, char const *argv[])
   getCSVCoord(csv, "Seed", X_value, Y_value); 
 
   iftDestroyArgs(&args);
-
+  printf("aaaa\n");
   out_img = segMultiScale(segm, X_value, Y_value);
   iftDestroyImage(&img);
   iftDestroyImage(&segm);
@@ -170,10 +170,12 @@ iftImage *segMultiScale
       size = 0;
 
   label_img = iftCreateImage(segm->xsize, segm->ysize, 1);
-
+  printf("Sera?\n");
   cropImageAsLayer(segm,4,coordS1);
-
+  printf("Sera 2?\n");
   segm = iftRelabelImage(segm);
+  printf("Nao creio\n");
+  
   iftMinMaxValues(segm,&min,&max); 
 
 
@@ -209,9 +211,9 @@ iftImage *segMultiScale
     centroides[i] = getVoxelCentroide(visited,i);
   }
 
-  // printf("alloc\n");
+  printf("alloc\n");
   getAdj(visited, adjM, visitList);
-  // printf("adjacency\n");
+  printf("adjacency\n");
 
   // while(hasNonVisitedSP(visited))
   // // while(false)
@@ -234,13 +236,15 @@ iftImage *segMultiScale
     } 
     
     */
-
+   printf("Aqui\n");
    while(hasNonVisitedSP(visitList, size)){
     iftRemoveDHeapElem(f1,labelS1);
     iftRemoveDHeapElem(f2,labelS2);
     visitList[labelS1] = 0;
     visitList[labelS2] = 0;
+    printf("Teste\n");
     coordS1 = findFurthestNeighborAdj(segm, centroides, size, adjM, coordS1);
+    printf("chegou\n");
     coordS2 = findFurthestNeighborAdj(segm, centroides, size, adjM, coordS2);
     labelS1 = segm->val[iftGetVoxelIndex(segm,coordS1)];
     labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
