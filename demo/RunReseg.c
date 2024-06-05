@@ -31,6 +31,10 @@ void getAdj(iftImage *img, int **adjM);
 void setVisitM(iftImage *img, int **visitM);
 int **allocMatrix (int m, int n);
 iftVoxel findFurthestNeighborAdj(iftImage *img, iftVoxel *centroides, int size, int **adjM, iftVoxel coordS1);
+  iftImage *iftRelabelImage
+(iftImage *label_img);
+
+
 
 /* MAIN _____________________________________________________________________*/
 int main(int argc, char const *argv[])
@@ -166,21 +170,33 @@ iftImage *segMultiScale
 
   int labelS1 = -1, 
       labelS2 = -1,
-      min = IFT_INFINITY_INT_NEG,
-      max = IFT_INFINITY_INT,
+      min = IFT_INFINITY_INT,
+      max = IFT_INFINITY_INT_NEG,
       size = 0;
 
   label_img = iftCreateImage(segm->xsize, segm->ysize, 1);
   printf("Sera?\n");
   cropImageAsLayer(segm,4,coordS1);
   printf("Sera 2?\n");
-  segm = iftRelabelImage(segm);
+  iftImage *original = segm;
+  segm = iftCreateImage(original->xsize, original->ysize, original->zsize);
+  for (size_t z = 0; z < original->zsize; z++)
+  {
+    visited = iftGetXYSlice(segm,z);
+    iftImage *temp = iftRelabelImage(visited);
+    iftPutXYSlice(segm,temp, z);
+    iftDestroyImage(visited);
+    iftDestroyImage(temp);
+  }
+
+
   printf("Nao creio\n");
   
   iftMinMaxValues(segm,&min,&max); 
 
+  printf("Min %d Max %d\n", min, max);
 
-  size = max + 1;
+  size = max;
 
   // double *prioS1 = (double *) calloc (size, sizeof(double));
   // double *prioS2 = (double *) calloc (size, sizeof(double));
@@ -199,7 +215,7 @@ iftImage *segMultiScale
   //   printf("Voxel S2 x: %d y:%d z:%d\n", coordS2.x,coordS2.y, coordS2.z);
   // printf("labelS1 %d labelS2 %d\n", labelS1, labelS2); 
   int l = 0;
-  visited = iftGetXYSlice(segm,l);
+  visited = iftGetXYSlice(segm,0);
 
 
   int **adjM = allocMatrix(size,size);
@@ -209,7 +225,8 @@ iftImage *segMultiScale
   iftVoxel *centroides = (iftVoxel *) calloc (size, sizeof(iftVoxel));
   
   for(int i = 0; i < size;i++){
-    centroides[i] = getVoxelCentroide(visited,i);
+    centroides[i] = getVoxelCentroide(segm,i);
+    printf("I %d X %d Y %d Z %d\n", i, centroides[i].x, centroides[i].y, centroides[i].z);
   }
 
   printf("alloc\n");
@@ -259,17 +276,17 @@ iftImage *segMultiScale
     // iftRemoveDHeapElem(f1,labelS1);
     // iftRemoveDHeapElem(f2,labelS2);
 
-    printf("Teste\n");
+    printf("labelS1 %d Max %d\n", labelS1, max);
     coordS1 = findFurthestNeighborAdj(segm, centroides, size, adjM, coordS1);
-    printf("chegou\n");
+    printf("labelS2 %d Max %d\n", labelS2, max);
     coordS2 = findFurthestNeighborAdj(segm, centroides, size, adjM, coordS2);
     labelS1 = segm->val[iftGetVoxelIndex(segm,coordS1)];
     labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
    }
   }
   
-  min = IFT_INFINITY_INT_NEG;
-  max = IFT_INFINITY_INT;
+  min = IFT_INFINITY_INT;
+  max = IFT_INFINITY_INT_NEG;
   iftMinMaxValues(label_img,&min,&max); 
   
   printf("Min %d Max %d\n", min, max);
@@ -279,6 +296,7 @@ iftImage *segMultiScale
   {
     swapLabel(segm,-1,1, z);
     swapLabel(segm,-2,2, z);
+    // swapLabel(segm,IFT_INFINITY_INT_NEG,0,z);
   }
   
 
@@ -297,10 +315,14 @@ iftVoxel findFurthestNeighborAdj(iftImage *img, iftVoxel *centroides, int size, 
   resp.z = 0;
   for (int i = 1; i < size; i++)
   { 
-      printf("i: %d\n",i);
+      // printf("i: %d\n",i);
       aux = iftVoxelDistance(centroides[i],coord);
-      printf("%f\n", aux);
-      if(aux > dist && adjM[img->val[iftGetVoxelIndex(img, centroides[i])]][img->val[iftGetVoxelIndex(img,coord)]] == 1){
+      // printf("Centroide %d %d %d\n", centroides[i].x, centroides[i].y, centroides[i].z);
+      int x = img->val[iftGetVoxelIndex(img, centroides[i])];
+      // printf("X %d\n", x);
+      int y = img->val[iftGetVoxelIndex(img,coord)];
+      // printf("Y %d\n", y);
+      if(aux > dist && adjM[x][y] == 1){
         resp = centroides[i];
         dist = aux;
       }
@@ -316,8 +338,8 @@ void setVisitM(iftImage *img, int **visitM)
   for (int i = 0; i < img->zsize; i++)
   {
     iftImage *lvl = iftGetXYSlice(img,i);
-    min = IFT_INFINITY_INT_NEG;
-    max = IFT_INFINITY_INT;
+    min = IFT_INFINITY_INT;
+    max = IFT_INFINITY_INT_NEG;
     iftMinMaxValues(lvl,&min,&max);
     for (int j = 1; j < max+1; j++)
     {
@@ -370,7 +392,7 @@ void cropImageAsLayer(iftImage *img, int layer, iftVoxel coord ){
             p.y = coord.y;
             for(p.z = 0; p.z < img->zsize;p.z++)
             {
-              img->val[iftGetVoxelIndex(img,p)] = 0;
+              img->val[iftGetVoxelIndex(img,p)] = IFT_INFINITY_INT_NEG;
             }
           }
       }
@@ -588,24 +610,27 @@ void freezeSP(iftImage *img, int scale, int label,int value)
 iftVoxel getVoxelCentroide(iftImage *img, int label)
 {
   iftVoxel resp, aux;
-  int sumX = 0, sumY = 0, quant = 0;
-  aux.z = 0;
-  for (aux.y = 0; aux.y < img->ysize; aux.y++)
+  int sumX = 0, sumY = 0, sumZ = 0, quant = 0;
+  for (aux.z = 0; aux.z < img->zsize; aux.z++)
   {
-      for (aux.x = 0; aux.x < img->xsize; aux.x++)
-      {
-        if(img->val[iftGetVoxelIndex(img, aux)] == label){
-          sumX += aux.x;
-          sumY += aux.y;
-          quant ++;
-          // printf("soma do X %d Y %d\n",sumX,sumY);
+    for (aux.y = 0; aux.y < img->ysize; aux.y++)
+    {
+        for (aux.x = 0; aux.x < img->xsize; aux.x++)
+        {
+          if(img->val[iftGetVoxelIndex(img, aux)] == label){
+            sumX += aux.x;
+            sumY += aux.y;
+            sumZ += aux.z;
+            quant ++;
+            // printf("soma do X %d Y %d\n",sumX,sumY);
+          }
         }
-      }
-      // printf("img->ysize = %d  and y = %d\n", img->ysize, y);
+        // printf("img->ysize = %d  and y = %d\n", img->ysize, y);
+    }
   }
   resp.x = sumX/(float)quant;
   resp.y = sumY/(float)quant;
-  resp.z = 0;
+  resp.z = sumZ/(float)quant;
   return resp;
 }
 
@@ -728,3 +753,66 @@ setar a nova forma de gerar S1 e S2
   // {
   //   printf("%d: X - %d Y - %d Z- %d\n",j, centroides[j].x,centroides[j].y,centroides[j].z);  
   // }
+
+
+  iftImage *iftRelabelImage
+(iftImage *label_img)
+{
+  #ifdef IFT_DEBUG //---------------------------------------------------------|
+  assert(label_img != NULL);
+  #endif //-------------------------------------------------------------------|
+  int new_label;
+  iftSet *queue;
+  iftImage *relabel_img;
+  iftAdjRel *A;
+  iftBMap *visited;
+
+  relabel_img = iftCreateImage(label_img->xsize, label_img->ysize, label_img->zsize);
+  if(iftIs3DImage(label_img)) { A = iftSpheric(sqrtf(3.0)); }
+  else { A = iftCircular(sqrtf(2.0)); }
+
+  new_label = 0;
+  queue = NULL;
+  visited = iftCreateBMap(label_img->n);
+
+  for(int p = 0; p < label_img->n; ++p)
+  {
+    if(!iftBMapValue(visited, p) && label_img->val[p]>0)  
+    {
+      iftInsertSet(&queue, p); ++new_label;
+      while(queue != NULL)
+      {
+        int x;
+        iftVoxel x_vxl;
+
+        x = iftRemoveSet(&queue);
+        x_vxl = iftGetVoxelCoord(label_img, x);
+        iftBMapSet1(visited, x);
+        relabel_img->val[x] = new_label;
+
+        for(int i = 1; i < A->n; ++i)
+        {
+          iftVoxel y_vxl;
+
+          y_vxl = iftGetAdjacentVoxel(A, x_vxl, i);  
+
+          if(iftValidVoxel(label_img, y_vxl))
+          {
+            int y;
+
+            y = iftGetVoxelIndex(label_img, y_vxl);
+
+            if(label_img->val[x] == label_img->val[y] && !iftBMapValue(visited, y))
+            { iftInsertSet(&queue, y); }
+          }
+        }
+      }
+    }
+  }
+
+  iftDestroySet(&queue);
+  iftDestroyBMap(&visited);
+  iftDestroyAdjRel(&A);
+
+  return relabel_img;
+}
