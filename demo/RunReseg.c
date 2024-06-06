@@ -179,14 +179,19 @@ iftImage *segMultiScale
   cropImageAsLayer(segm,4,coordS1);
   printf("Sera 2?\n");
   iftImage *original = segm;
-  segm = iftCreateImage(original->xsize, original->ysize, original->zsize);
-  for (size_t z = 0; z < original->zsize; z++)
+  printf("original z size %d\n", original->zsize);
+  for (int z = 0; z < original->zsize; z++)
   {
+    iftMinMaxValues(segm,&min,&max); 
+    printf("SEGM Z %d Min %d Max %d\n", z, min, max);
     visited = iftGetXYSlice(segm,z);
     iftImage *temp = iftRelabelImage(visited);
     iftPutXYSlice(segm,temp, z);
-    iftDestroyImage(visited);
-    iftDestroyImage(temp);
+
+    iftMinMaxValues(visited,&min,&max); 
+    printf("VISITED Z %d Min %d Max %d\n", z, min, max);
+    iftDestroyImage(&visited);
+    iftDestroyImage(&temp);
   }
 
 
@@ -231,6 +236,7 @@ iftImage *segMultiScale
 
   printf("alloc\n");
   getAdj(visited, adjM);
+  printf("adj\n");
   setVisitM(segm, visitM);
   printf("adjacency\n");
 
@@ -317,7 +323,7 @@ iftVoxel findFurthestNeighborAdj(iftImage *img, iftVoxel *centroides, int size, 
   { 
       // printf("i: %d\n",i);
       aux = iftVoxelDistance(centroides[i],coord);
-      // printf("Centroide %d %d %d\n", centroides[i].x, centroides[i].y, centroides[i].z);
+      printf("Centroide %d %d %d\n", centroides[i].x, centroides[i].y, centroides[i].z);
       int x = img->val[iftGetVoxelIndex(img, centroides[i])];
       // printf("X %d\n", x);
       int y = img->val[iftGetVoxelIndex(img,coord)];
@@ -491,12 +497,15 @@ void getAdj(iftImage *img, int **adjM){
   
   int label1, label2;
   iftVoxel p, aux;
-  p.z = 4;
-  aux.z = 4;
+  p.z = 0;
+  aux.z = 0;
+  printf("AAAA\n");
   for(p.y = 0; p.y < img->ysize;p.y++)
   {
+    printf("BBBB\n");
     for(p.x = 0; p.x < img->xsize;p.x++)
     {
+      printf("CCCC\n");
       // printf("XSize- %d -YSize- %d -X- %d -Y- %d\n", img->xsize, img->ysize, p.x, p.y);
       if(p.x > 0)
       {
@@ -511,7 +520,7 @@ void getAdj(iftImage *img, int **adjM){
           adjM[label2][label1] = 1;
         }
       }
-      if(p.y > 0)
+      else if(p.y > 0)
       {
         aux.x = p.x;
         aux.y = p.y-1;
@@ -524,7 +533,7 @@ void getAdj(iftImage *img, int **adjM){
           adjM[label2][label1] = 1;
         }
       }
-      if(p.x < img->xsize-1)
+      else if(p.x < img->xsize-1)
       {
         aux.x = p.x+1;
         aux.y = p.y;
@@ -537,7 +546,7 @@ void getAdj(iftImage *img, int **adjM){
           adjM[label2][label1] = 1;
         }
       }
-      if(p.y > img->ysize-1)
+      else if(p.y > img->ysize-1)
       {
         aux.x = p.x;
         aux.y = p.y+1;
