@@ -27,12 +27,13 @@ void swapLabel(iftImage *img, int label0, int label1, int scale);
 void cropImageAsLayer(iftImage *img, int layer, iftVoxel coord );
 bool isValidLabel(iftImage *img, int label);
 void findS(iftImage *img, int *label);
-void getAdj(iftImage *img, int **adjM);
+void setAdj(iftImage *img, int **adjM);
 void setVisitM(iftImage *img, int **visitM);
 int **allocMatrix (int m, int n);
 iftVoxel findFurthestNeighborAdj(iftImage *img, iftVoxel *centroides, int size, int **adjM, iftVoxel coordS1);
   iftImage *iftRelabelImage
 (iftImage *label_img);
+void printAdj(int **adjM, int size);
 
 
 
@@ -61,7 +62,7 @@ int main(int argc, char const *argv[])
   getCSVCoord(csv, "Seed", X_value, Y_value); 
 
   iftDestroyArgs(&args);
-  printf("aaaa\n");
+  // printf("aaaa\n");
   out_img = segMultiScale(segm, X_value, Y_value);
   iftDestroyImage(&img);
   iftDestroyImage(&segm);
@@ -167,6 +168,13 @@ iftImage *segMultiScale
   iftVoxel coordS1, coordS2;
   //  centroideS1, centroideS2;
 
+  coordS1.x = X_value[0];
+  coordS1.y = Y_value[0];
+  coordS1.z = 0;
+  coordS2.x = X_value[1];
+  coordS2.y = Y_value[1];
+  coordS2.z = 0;
+
 
   int labelS1 = -1, 
       labelS2 = -1,
@@ -175,16 +183,17 @@ iftImage *segMultiScale
       size = 0;
 
   label_img = iftCreateImage(segm->xsize, segm->ysize, 1);
-  printf("Sera?\n");
+  // printf("Sera?\n");
   cropImageAsLayer(segm,4,coordS1);
-  printf("Sera 2?\n");
+  // printf("Sera 2?\n");
   iftImage *original = segm;
+  segm = iftCreateImage(original->xsize, original->ysize, original->zsize);
   printf("original z size %d\n", original->zsize);
   for (int z = 0; z < original->zsize; z++)
   {
     iftMinMaxValues(segm,&min,&max); 
     printf("SEGM Z %d Min %d Max %d\n", z, min, max);
-    visited = iftGetXYSlice(segm,z);
+    visited = iftGetXYSlice(original,z);
     iftImage *temp = iftRelabelImage(visited);
     iftPutXYSlice(segm,temp, z);
 
@@ -195,7 +204,7 @@ iftImage *segMultiScale
   }
 
 
-  printf("Nao creio\n");
+  // printf("Nao creio\n");
   
   iftMinMaxValues(segm,&min,&max); 
 
@@ -209,13 +218,6 @@ iftImage *segMultiScale
   // iftDHeap *f1 = iftCreateDHeap(size, prioS1),
   //          *f2 = iftCreateDHeap(size, prioS2);
 
-  coordS1.x = X_value[0];
-  coordS1.y = Y_value[0];
-  coordS1.z = 0;
-  coordS2.x = X_value[1];
-  coordS2.y = Y_value[1];
-  coordS2.z = 0;
-
   //   printf("Voxel S1 x: %d y:%d z:%d\n", coordS1.x,coordS1.y, coordS1.z);
   //   printf("Voxel S2 x: %d y:%d z:%d\n", coordS2.x,coordS2.y, coordS2.z);
   // printf("labelS1 %d labelS2 %d\n", labelS1, labelS2); 
@@ -223,73 +225,88 @@ iftImage *segMultiScale
   visited = iftGetXYSlice(segm,0);
 
 
-  int **adjM = allocMatrix(size,size);
+  int **adjM = allocMatrix(size+1,size+1);
   
-  int **visitM = allocMatrix(size,size);
+  int **visitM = allocMatrix(size+1,size+1);
 
   iftVoxel *centroides = (iftVoxel *) calloc (size, sizeof(iftVoxel));
   
   for(int i = 0; i < size;i++){
     centroides[i] = getVoxelCentroide(segm,i);
-    printf("I %d X %d Y %d Z %d\n", i, centroides[i].x, centroides[i].y, centroides[i].z);
+    // printf("I %d X %d Y %d Z %d\n", i, centroides[i].x, centroides[i].y, centroides[i].z);
   }
 
   printf("alloc\n");
-  getAdj(visited, adjM);
+  setAdj(visited, adjM);
+  printAdj(adjM, size);
   printf("adj\n");
   setVisitM(segm, visitM);
-  printf("adjacency\n");
+  // printf("adjacency\n");
 
-  for (int i = 0; i < size; i++)
-  {
-    labelS1 = segm->val[iftGetVoxelIndex(segm,coordS1)];
-    labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
-    // iftInsertDHeap(f1,labelS1);
-    // iftInsertDHeap(f2,labelS2);
+  labelS1 = segm->val[iftGetVoxelIndex(segm,coordS1)];
+  labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
+    printf("labelS1 %d Max %d\n", labelS1, max);
+    printf("labelS2 %d Max %d\n", labelS2, max);
+
+  // iftInsertDHeap(f1,labelS1);
+  // iftInsertDHeap(f2,labelS2);
 
 
-    /*
-    While(...){
+  /*
+  While(...){
 
-      remove um spx S
-      marca S como parte de S1 ou S2
-      para cada spx vizinho de S:
-    } 
-    
-    */
-   printf("Aqui\n");
-   while(hasNonVisitedSP(visitM, size, segm->zsize)){
+    remove um spx S
+    marca S como parte de S1 ou S2
+    para cada spx vizinho de S:
+  } 
+  
+  */
+  //  printf("Aqui\n");
+   while(hasNonVisitedSP(visitM, size, segm->zsize))
+   {
     while(labelS1 != labelS2 && l < (segm->zsize)-1)
     {
-      // printf("%d scale %d segm->zsize\n", l, segm->zsize);
+      printf("%d scale %d segm->zsize\n", l, segm->zsize);
       // slice = iftGetXYSlice(segm,l);
       freezeSP(segm,l,labelS1,-1);
       freezeSP(segm,l,labelS2,-2);
+      // printf("AQUI\n");
       visitM[labelS1][l] = 0;
       visitM[labelS2][l] = 0;
       l++;
       coordS1.z = coordS2.z = l;
       labelS1 = segm->val[iftGetVoxelIndex(segm,coordS1)];
       labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
-      printf("Camada %d FREEZOU\n", l);
-      printf("freeze\n");
+      // printf("Camada %d FREEZOU\n", l);
+      // printf("freeze\n");
     }
     coordS1.z = coordS2.z = 0;
     labelS1 = segm->val[iftGetVoxelIndex(segm,coordS1)];
     labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
+    for (int i = 0; i < size; i++)
+      {
+        adjM[labelS1][i] = 0;
+        adjM[labelS2][i] = 0;
+        adjM[i][labelS1] = 0;
+        adjM[i][labelS1] = 0;
+      }
 
+    // printf("AQUI2\n");
 
     // iftRemoveDHeapElem(f1,labelS1);
     // iftRemoveDHeapElem(f2,labelS2);
-
-    printf("labelS1 %d Max %d\n", labelS1, max);
+  
     coordS1 = findFurthestNeighborAdj(segm, centroides, size, adjM, coordS1);
-    printf("labelS2 %d Max %d\n", labelS2, max);
-    coordS2 = findFurthestNeighborAdj(segm, centroides, size, adjM, coordS2);
     labelS1 = segm->val[iftGetVoxelIndex(segm,coordS1)];
-    labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
+    printf("labelS1 %d Max %d\n", labelS1, max);
+    // printf("AQUI3\n");
+    if(hasNonVisitedSP(visitM, size, segm->zsize))
+    {
+      coordS2 = findFurthestNeighborAdj(segm, centroides, size, adjM, coordS2);
+      labelS2 = segm->val[iftGetVoxelIndex(segm,coordS2)];
+      printf("labelS2 %d Max %d\n", labelS2, max);
+    }
    }
-  }
   
   min = IFT_INFINITY_INT;
   max = IFT_INFINITY_INT_NEG;
@@ -323,15 +340,29 @@ iftVoxel findFurthestNeighborAdj(iftImage *img, iftVoxel *centroides, int size, 
   { 
       // printf("i: %d\n",i);
       aux = iftVoxelDistance(centroides[i],coord);
-      printf("Centroide %d %d %d\n", centroides[i].x, centroides[i].y, centroides[i].z);
+      // printf("Centroide %d %d %d\n", centroides[i].x, centroides[i].y, centroides[i].z);
       int x = img->val[iftGetVoxelIndex(img, centroides[i])];
       // printf("X %d\n", x);
       int y = img->val[iftGetVoxelIndex(img,coord)];
       // printf("Y %d\n", y);
-      if(aux > dist && adjM[x][y] == 1){
+      if(aux > dist && adjM[x][y] == 1 && x !=0 && y !=0){
         resp = centroides[i];
         dist = aux;
       }
+  }
+  if(resp.x == 0 && resp.y == 0 && resp.z == 0)
+  {
+    for (int i = 0; i < size; i++)
+    {
+      for (int j = 0; j < size; j++)
+      {
+        if(adjM[i][j] != 0)
+        {
+          resp = centroides[i];
+          return resp;
+        }
+      }
+    }
   }
   return resp;
 
@@ -459,7 +490,7 @@ void findS(iftImage *img, int *label)
   }
 
   *label = newLabel;
-  printf("Saiu como = %d\n",*label);
+  // printf("Saiu como = %d\n",*label);
 }
 
 
@@ -483,7 +514,7 @@ bool isValidLabel(iftImage *img, int label)
     for(p.x = 0; p.x < img->xsize;p.x++)
     {
       if(img->val[iftGetVoxelIndex(img,p)] == label){
-        printf("X = %d Y = %d\n",p.x,p.y);
+        // printf("X = %d Y = %d\n",p.x,p.y);
         return true;
       }
         
@@ -493,74 +524,138 @@ bool isValidLabel(iftImage *img, int label)
   return resp;
 }
 
-void getAdj(iftImage *img, int **adjM){
+void setAdj(iftImage *img, int **adjM){
   
   int label1, label2;
   iftVoxel p, aux;
   p.z = 0;
   aux.z = 0;
-  printf("AAAA\n");
+  // printf("AAAA\n");
   for(p.y = 0; p.y < img->ysize;p.y++)
   {
-    printf("BBBB\n");
+    // printf("BBBB\n");
     for(p.x = 0; p.x < img->xsize;p.x++)
     {
-      printf("CCCC\n");
+      // printf("CCCC\n");
       // printf("XSize- %d -YSize- %d -X- %d -Y- %d\n", img->xsize, img->ysize, p.x, p.y);
       if(p.x > 0)
       {
+        // printf("DDDD\n");
         aux.x = p.x-1;
         aux.y = p.y;
         label1 = img->val[iftGetVoxelIndex(img,p)];
         label2 = img->val[iftGetVoxelIndex(img,aux)];
         // printf("Primeira label 1: %d label 2: %d\n",label1,label2);
-        if(p.x > 0 && label1 != label2)
+        if(label1 != label2)
         {
           adjM[label1][label2] = 1;
           adjM[label2][label1] = 1;
         }
       }
-      else if(p.y > 0)
+      if(p.y > 0)
       {
+        // printf("EEEE\n");
         aux.x = p.x;
         aux.y = p.y-1;
         label1 = img->val[iftGetVoxelIndex(img,p)];
         label2 = img->val[iftGetVoxelIndex(img,aux)];
         // printf("Segunda label 1: %d label 2: %d\n",label1,label2);
-        if(p.x > 0 && label1 != label2)
+        if(label1 != label2)
         {
           adjM[label1][label2] = 1;
           adjM[label2][label1] = 1;
         }
       }
-      else if(p.x < img->xsize-1)
+      if(p.x < img->xsize-1)
       {
+        // printf("FFFF\n");
         aux.x = p.x+1;
         aux.y = p.y;
         label1 = img->val[iftGetVoxelIndex(img,p)];
         label2 = img->val[iftGetVoxelIndex(img,aux)];
         // printf("Terceira label 1: %d label 2: %d\n",label1,label2);
-        if(p.x > 0 && label1 != label2)
+        if(label1 != label2)
         {
+          // printf("teste\n");
           adjM[label1][label2] = 1;
+          // printf("teste2\n");
           adjM[label2][label1] = 1;
+          // printf("teste3\n");
         }
       }
-      else if(p.y > img->ysize-1)
+      if(p.y > img->ysize-1)
       {
+        // printf("GGGG\n");
         aux.x = p.x;
         aux.y = p.y+1;
         label1 = img->val[iftGetVoxelIndex(img,p)];
         label2 = img->val[iftGetVoxelIndex(img,aux)];
         // printf("Quarta label 1: %d label 2: %d\n",label1,label2);
-        if(p.x > 0 && label1 != label2)
+        if(label1 != label2)
         {
           adjM[label1][label2] = 1;
           adjM[label2][label1] = 1;
         }
       }
+      if(p.x > 0 && p.y > 0)
+      {
+        // printf("HHHH\n");
+        aux.x = p.x-1;
+        aux.y = p.y-1;
+        label1 = img->val[iftGetVoxelIndex(img,p)];
+        label2 = img->val[iftGetVoxelIndex(img,aux)];
+        // printf("Quarta label 1: %d label 2: %d\n",label1,label2);
+        if(label1 != label2)
+        {
+          adjM[label1][label2] = 1;
+          adjM[label2][label1] = 1;
+        }
+      }
+      if(p.x > 0 && p.y > img->ysize-1)
+      {
+        // printf("IIII\n");
+        aux.x = p.x-1;
+        aux.y = p.y+1;
+        label1 = img->val[iftGetVoxelIndex(img,p)];
+        label2 = img->val[iftGetVoxelIndex(img,aux)];
+        // printf("Quarta label 1: %d label 2: %d\n",label1,label2);
+        if(label1 != label2)
+        {
+          adjM[label1][label2] = 1;
+          adjM[label2][label1] = 1;
+        }
+      }
+      if(p.x > img->ysize-1 && p.y > 0)
+      {
+        // printf("JJJJ\n");
+        aux.x = p.x+1;
+        aux.y = p.y-1;
+        label1 = img->val[iftGetVoxelIndex(img,p)];
+        label2 = img->val[iftGetVoxelIndex(img,aux)];
+        // printf("Quarta label 1: %d label 2: %d\n",label1,label2);
+        if(label1 != label2)
+        {
+          adjM[label1][label2] = 1;
+          adjM[label2][label1] = 1;
+        }
+      }
+      if(p.x > img->ysize-1 && p.y > img->ysize-1)
+      {
+        // printf("KKKK\n");
+        aux.x = p.x+1;
+        aux.y = p.y+1;
+        label1 = img->val[iftGetVoxelIndex(img,p)];
+        label2 = img->val[iftGetVoxelIndex(img,aux)];
+        printf("Quarta label 1: %d label 2: %d\n",label1,label2);
+        if(label1 != label2)
+        {
+          adjM[label1][label2] = 1;
+          adjM[label2][label1] = 1;
+        }       
+      }
     }
   }
+
 
 }
 
@@ -575,10 +670,12 @@ bool hasNonVisitedSP(int **visitM, int size, int quantScale)
       {
         // printf("Não visitado %d\n", img->val[iftGetVoxelIndex(img,p)]);
         resp = true;
+        printf("resp %d\n", resp);
         return resp;
       }   
     }
   }
+  printf("resp %d\n", resp);
   return resp;
 }
 
@@ -824,4 +921,23 @@ setar a nova forma de gerar S1 e S2
   iftDestroyAdjRel(&A);
 
   return relabel_img;
+}
+
+void printAdj(int **adjM, int size)
+{
+  printf("%3d ", 0);
+  for (int i = 0; i < size; i++)
+  {
+    printf("%3d ", i);
+  }
+  printf("\n");
+  for (int i = 0; i < size; i++)
+  {
+    printf("%3d ", i);
+    for (int j = 0; j < size; j++)
+    {
+      printf("%3d ", adjM[i][j]);
+    }
+    printf("\n");
+  }
 }
