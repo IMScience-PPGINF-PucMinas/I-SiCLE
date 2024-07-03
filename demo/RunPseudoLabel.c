@@ -123,9 +123,13 @@ iftImage *calcPseudoLabel
     if(round_sat + 1 == SAT_ROUNDS) round_val = (round_val + 1) % VAL_ROUNDS;
     if(hue + ANGLE_SKIP >= 360) round_sat = (round_sat + 1) % SAT_ROUNDS;
 
-    hue = (hue + ANGLE_SKIP) % 360;
-    sat = (SAT_ROUNDS - round_sat)/(float)SAT_ROUNDS;
-    val = (VAL_ROUNDS - round_val)/(float)VAL_ROUNDS;
+    // hue = (hue + ANGLE_SKIP) % 360;
+    hue = 350;
+    // sat = (SAT_ROUNDS - round_sat)/(float)SAT_ROUNDS;
+    // val = (VAL_ROUNDS - round_val)/(float)VAL_ROUNDS;
+
+    sat = 1.0;
+    val = 1.0;
 
     label_hsv[i] = hue;
     label_saturation[i] = sat;

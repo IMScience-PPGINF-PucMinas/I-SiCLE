@@ -1,7 +1,7 @@
 /*****************************************************************************\
 * RunRelabel.c
 *
-* AUTHOR  : Felipe Belem
+* AUTHOR  : Lucca Lacerda
 * DATE    : 2023-06-09
 * LICENSE : MIT License
 * EMAIL   : felipe.belem@ic.unicamp.br

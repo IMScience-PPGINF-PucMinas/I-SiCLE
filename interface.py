@@ -30,7 +30,7 @@ image_path = None
 
 def run_sicle(image_path, n0=None, nf=None):
     # Adjust the command to include the selected values of n0 and nf
-    cmd_sicle = ['./bin/RunSICLE', '--img', image_path, '--out', 'toyExOut.pgm', "--multiscale"]
+    cmd_sicle = ['./bin/RunSICLE', '--img', image_path, '--out', 'toyExOut1.pgm'] #, "--multiscale"]
 
     if n0 is not None:
         cmd_sicle.extend(['--n0', n0])
@@ -84,6 +84,7 @@ def select_image():
         image_path = file_path
         n0_value = n0_entry.get() if n0_entry.get() else None
         nf_value = nf_entry.get() if nf_entry.get() else None
+        erase()
         run_sicle(file_path, n0_value, nf_value)
 
 

@@ -147,6 +147,19 @@ float iftEvalBR
 (iftImage *label_img, iftImage *gt_img);
 
 /*
+ * Evaluates the DICE coefficient of the superspel which most overlaps the
+ * object (indicated by its label). Higher is better
+ * 
+ * PARAMETERS:
+ * 	label_img[in] - REQUIRED: Superspel segmentation
+ * 	gt_img[in] - REQUIRED: Ground-truth
+ *
+ * RETURNS: Dice coefficient between [0,1] 
+ */
+float iftEvalDICE
+(iftImage *label_img, iftImage* gt_img, int obj_label);
+
+/*
  * Evaluates the under-segmentation error of the superspel segmentation by 
  * calculating the error of multiple object overlap by the superspels. Lower
  * is better.

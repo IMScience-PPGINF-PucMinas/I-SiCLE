@@ -3050,9 +3050,9 @@ iftImage *iftGetXYSlice(const iftImage *img, int zcoord)
 
     u.z   = zcoord;
     q     = 0;
-    #if IFT_OMP
-    #pragma omp parallel for private(p,q)
-    #endif
+    // #if IFT_OMP
+    // #pragma omp parallel for private(p,q)
+    // #endif
     for (int y = 0; y < img->ysize; y++)
         for (int x = 0; x < img->xsize; x++)
         {

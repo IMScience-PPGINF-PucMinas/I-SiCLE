@@ -521,6 +521,47 @@ float iftEvalBR
   return bound_rec;
 }
 
+float iftEvalDICE
+(iftImage *label_img, iftImage* gt_img, int obj_label)
+{
+ #ifdef IFT_DEBUG //---------------------------------------------------------|
+  assert(label_img != NULL);
+  assert(gt_img != NULL);
+  iftVerifyImageDomains(label_img, gt_img, __func__);
+  #endif //-------------------------------------------------------------------|
+  int min_label, max_label, num_labels, min_gt, max_gt, num_gt, max_inter_label;
+  float dice, div;
+  int **inter;
+
+  iftMinMaxValues(label_img, &min_label, &max_label);
+  num_labels = max_label - min_label + 1;
+  iftMinMaxValues(gt_img, &min_gt, &max_gt);
+  num_gt = max_gt - min_gt + 1;
+
+  #ifdef IFT_DEBUG //---------------------------------------------------------|
+  assert(obj_label >= min_gt && obj_label <= max_gt);
+  #endif //-------------------------------------------------------------------|
+
+  inter = iftMetrics_CalcLabelGTIntersec(label_img, gt_img);
+
+  max_inter_label = 0;
+  for(int i = 1; i < num_labels; ++i)
+  {
+    if(inter[i][obj_label] > inter[max_inter_label][obj_label]) 
+    { max_inter_label = i; }
+  }
+  div = 0.0;
+  for(int j = 0; j < num_gt; ++j) { div += inter[max_inter_label][j]; }
+  for(int i = 0; i < num_labels; ++i) { div += inter[i][obj_label]; }
+
+  dice = (2.0 * inter[max_inter_label][obj_label])/div;
+  for(int i = 0; i < num_labels; ++i) 
+  { free(inter[i]); }
+  free(inter);
+
+  return dice;
+}
+
 float iftEvalUE
 (iftImage *label_img, iftImage *gt_img)
 {

@@ -29,7 +29,7 @@ LIB_SFIX = .a#.lib for Windows
 
 # Compiler --------------------------------------------------------------------
 # Enabling debugging GNU GCC flags
-IFT_DEBUG = YES
+IFT_DEBUG = NO
 
 # Enabling external libraries
 # OpenMP: Requires version 4.5
