@@ -697,12 +697,15 @@ iftSICLE_TStats *iftSICLE_CalcTStats
     			int vj_index, vj_root, vj_label;
 
     			vj_index = iftMGetVoxelIndex(sicle->mimg, vj_voxel);
-    			vj_label = iftSICLE_GetRootLabel(data, vj_index);
     			vj_root = data->root_map[vj_index];
 
     			// If it is not on the bkg and has different label
     			if(data->cost_map[vj_index] != IFTSICLE_BKGCOST && vi_root!=vj_root)
-    			{ iftBMapSet1(tstats->adj[vi_label], vj_label);}
+    			{ 
+					vj_label = iftSICLE_GetRootLabel(data, vj_index);
+					iftBMapSet1(tstats->adj[vi_label], vj_label);
+    			
+				}
     		}
     	}
     }

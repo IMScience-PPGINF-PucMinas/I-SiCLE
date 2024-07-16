@@ -107,6 +107,17 @@ int main(int argc, char const *argv[])
 		else { sprintf(tmp_str, ",%f", ue); }
 		strcat(out_str, tmp_str);
 	}
+       if(iftExistArg(args, "all") || iftExistArg(args, "dice"))
+	{      
+              // int min = IFT_INFINITY_INT;
+              // int max = IFT_INFINITY_INT_NEG;
+              // iftMinMaxValues(gt_img, &min, &max);
+              // printf("Min %d Max %d\n",min, max);
+		float dice = iftEvalDICE(label_img, gt_img, 255);
+		if(!as_csv){ sprintf(tmp_str, "DICE(-): %.3f\n", dice);  }
+		else { sprintf(tmp_str, ",%f", dice); }
+		strcat(out_str, tmp_str);
+	}
 
   iftDestroyArgs(&args);
   iftDestroyImage(&label_img);
@@ -151,6 +162,8 @@ void usage()
          "Computes the Temporal EXtension (TEX).");
   printf("%-*s %s\n", SKIP_IND, "--ue", 
          "Computes the Under-segmentation Error (UE). Ground-truth needed.");
+  printf("%-*s %s\n", SKIP_IND, "--dice", 
+         "Computes Dice-Sørensen coefficient. Ground-truth and original image needed.");
 
   printf("\n");
 }

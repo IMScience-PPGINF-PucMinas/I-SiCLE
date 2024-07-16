@@ -11,7 +11,7 @@
 
 void usage();
 iftImage *calcPseudoLabel
-(iftImage *label_img, iftImage *img, float alpha);
+(iftImage *label_img, iftImage *img, float alpha, int hueVar);
 void readImgInputs
 (iftArgs *args, iftImage **img, iftImage **labels, const char **path, 
   bool *is_video);
@@ -38,9 +38,11 @@ int main(int argc, char const *argv[])
   const char *OUT_PATH;
   float alpha;
   iftImage *img, *label_img, *out_img;
+  int hueVar;
 
   readImgInputs(args, &img, &label_img, &OUT_PATH, &is_video);
   alpha = 1.0;
+  hueVar = 0;
   if(iftExistArg(args, "opac") == true)
   {
     if(iftHasArgVal(args, "opac") == true)
@@ -51,9 +53,20 @@ int main(int argc, char const *argv[])
     }
     else iftError("No opacity value was given", __func__);
   }
+  if(iftExistArg(args, "hue") == true)
+  {
+    if(iftHasArgVal(args, "hue") == true)
+    {
+      hueVar = atof(iftGetArg(args, "hue"));
+      if(hueVar <= 0 || hueVar > 360)
+        iftError("Hue must be within [1,360]", __func__);   
+    }
+    else iftError("No hue value was given", __func__);
+  }
   iftDestroyArgs(&args);
 
-  out_img = calcPseudoLabel(label_img, img, alpha);
+
+  out_img = calcPseudoLabel(label_img, img, alpha,hueVar);
   iftDestroyImage(&label_img);
 
   if(is_video == false)
@@ -79,6 +92,8 @@ void usage()
          "Original image");
   printf("%-*s %s\n", SKIP_IND, "--opac", 
          "Label opacity. Default: 1.0");
+  printf("%-*s %s\n", SKIP_IND, "--hue", 
+         "Label hue from hsv. Default: 0 = random");
   printf("%-*s %s\n", SKIP_IND, "--help", 
          "Prints this message");
 
@@ -86,7 +101,7 @@ void usage()
 }
 
 iftImage *calcPseudoLabel
-(iftImage *label_img, iftImage *img, float alpha)
+(iftImage *label_img, iftImage *img, float alpha, int hueVar)
 {
   #if IFT_DEBUG //-----------------------------------------------------------//
   assert(label_img != NULL);
@@ -123,13 +138,17 @@ iftImage *calcPseudoLabel
     if(round_sat + 1 == SAT_ROUNDS) round_val = (round_val + 1) % VAL_ROUNDS;
     if(hue + ANGLE_SKIP >= 360) round_sat = (round_sat + 1) % SAT_ROUNDS;
 
-    // hue = (hue + ANGLE_SKIP) % 360;
-    hue = 350;
-    // sat = (SAT_ROUNDS - round_sat)/(float)SAT_ROUNDS;
-    // val = (VAL_ROUNDS - round_val)/(float)VAL_ROUNDS;
+    if(hueVar == 0){
+      hue = (hue + ANGLE_SKIP) % 360;
+      sat = (SAT_ROUNDS - round_sat)/(float)SAT_ROUNDS;
+      val = (VAL_ROUNDS - round_val)/(float)VAL_ROUNDS;
+    }
+    else {
+      hue = hueVar;
+      sat = 1.0;
+      val = 1.0;
+    }
 
-    sat = 1.0;
-    val = 1.0;
 
     label_hsv[i] = hue;
     label_saturation[i] = sat;
